@@ -47,6 +47,7 @@ progress { width:100%; accent-color:var(--accent) }
 .post-thumb { width:48px; height:48px; object-fit:cover; object-position:top; border-radius:8px; background:var(--bg) }
 .post-row h3 { margin:0 0 3px; font-size:1rem; line-height:1.3; overflow-wrap:anywhere }
 .post-row p { color:var(--muted); margin:0; font-size:.875rem }
+.post-row .post-date { margin-top:3px; font-variant-numeric:tabular-nums }
 .post-status.published { color:#a9e4bd }
 .post-status.draft { color:#f5d89b }
 .post-actions { display:flex; flex-wrap:wrap; gap:6px }

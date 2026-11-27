@@ -12,6 +12,10 @@ const library = byId("library");
 const editor = byId("editor");
 const postList = byId("postList");
 const pageSize = 8;
+const postDateFormat = new Intl.DateTimeFormat("en-GB", {
+  day: "numeric", month: "short", year: "numeric",
+  hour: "numeric", minute: "2-digit", hour12: true,
+});
 let posts = [];
 let page = 1;
 let editingPost = null;
@@ -132,7 +136,7 @@ async function loadPosts() {
   postList.setAttribute("aria-busy", "true");
   try {
     const { data, error } = await supabase.from("posts")
-      .select("id,title,kind,status,created_at,body,external_url,cover_url,cover_path,show_latest")
+      .select("id,title,kind,status,created_at,published_at,body,external_url,cover_url,cover_path,show_latest")
       .order("created_at", { ascending: false });
     if (error) throw error;
     posts = data;
@@ -183,6 +187,18 @@ function renderPosts() {
     badge.textContent = post.status === "published" ? "Published" : "Draft";
     meta.append(" · ", badge);
     details.append(title, meta);
+    const publishedAt = post.status === "published" ? post.published_at : null;
+    const timestamp = publishedAt || post.created_at;
+    const date = timestamp ? new Date(timestamp) : null;
+    if (date && Number.isFinite(date.getTime())) {
+      const timing = document.createElement("p");
+      timing.className = "post-date";
+      const time = document.createElement("time");
+      time.dateTime = date.toISOString();
+      time.textContent = postDateFormat.format(date);
+      timing.append(publishedAt ? "Posted " : "Created ", time);
+      details.append(timing);
+    }
     summary.append(thumbnail, details);
     const actions = document.createElement("div");
     actions.className = "post-actions";
@@ -203,12 +219,14 @@ function renderPosts() {
     toggle.addEventListener("click", async () => {
       toggle.disabled = true;
       const status = post.status === "published" ? "draft" : "published";
+      const publishedAt = status === "published" ? new Date().toISOString() : null;
       try {
         const { error } = await supabase.from("posts").update({
-          status, published_at: status === "published" ? new Date().toISOString() : null,
+          status, published_at: publishedAt,
         }).eq("id", post.id).select("id").single();
         if (error) throw error;
         post.status = status;
+        post.published_at = publishedAt;
         message(byId("listMessage"), status === "published" ? "Post published." : "Post moved to drafts.", "success");
         renderPosts();
       } catch (error) {
