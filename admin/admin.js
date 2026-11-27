@@ -8,7 +8,7 @@ const contentFile = byId("contentFile");
 const publishButton = byId("publishButton");
 const progress = byId("progress");
 const postForm = byId("postForm");
-let editingId = null;
+let editingPost = null;
 
 function message(element, text, type = "") {
   element.textContent = text;
@@ -20,18 +20,19 @@ function safeName(name) {
 }
 
 function updateFields() {
-  const needsFile = !editingId && ["pdf", "image"].includes(kind.value);
-  byId("fileField").hidden = !needsFile;
-  contentFile.required = needsFile;
+  const hasFile = ["pdf", "image"].includes(kind.value);
+  byId("fileField").hidden = !hasFile;
+  contentFile.required = hasFile && !editingPost;
   contentFile.accept = kind.value === "pdf" ? "application/pdf" : "image/jpeg,image/png,image/webp";
-  byId("fileField").childNodes[0].textContent = kind.value === "pdf" ? "PDF file" : "Image file";
+  const fileLabel = kind.value === "pdf" ? "PDF file" : "Image file";
+  byId("fileField").childNodes[0].textContent = editingPost ? `Replace ${fileLabel} (optional)` : fileLabel;
   byId("linkField").hidden = kind.value !== "link";
   byId("externalUrl").required = kind.value === "link";
   byId("bodyField").childNodes[0].textContent = kind.value === "prompt" ? "Prompt text" : "Description or prompt";
 }
 
 function setPostEditor(post = null) {
-  editingId = post?.id ?? null;
+  editingPost = post;
   postForm.reset();
   byId("postHeading").textContent = post ? "Edit post" : "New post";
   publishButton.textContent = post ? "Save changes" : "Publish post";
@@ -100,7 +101,7 @@ async function loadPosts() {
   const list = byId("postList");
   list.textContent = "Loading…";
   const { data, error } = await supabase.from("posts")
-    .select("id,title,kind,status,created_at,body,external_url,cover_url,show_latest")
+    .select("id,title,kind,status,created_at,body,external_url,cover_url,cover_path,show_latest")
     .order("created_at", { ascending: false });
   if (error) { list.textContent = error.message; return; }
   list.replaceChildren();
@@ -160,7 +161,8 @@ byId("loginForm").addEventListener("submit", async event => {
 postForm.addEventListener("submit", async event => {
   event.preventDefault();
   if (publishButton.disabled) return;
-  const postId = editingId;
+  const post = editingPost;
+  const postId = post?.id;
   const fields = {
     title: byId("title").value.trim(),
     body: byId("body").value.trim(),
@@ -169,7 +171,7 @@ postForm.addEventListener("submit", async event => {
   };
   const postKind = kind.value;
   const publishNow = byId("publishNow").checked;
-  const selectedFile = postId ? null : contentFile.files[0];
+  const selectedFile = byId("fileField").hidden ? null : contentFile.files[0];
   const selectedCover = byId("coverFile").files[0];
   publishButton.disabled = true;
   postForm.inert = true;
@@ -191,13 +193,14 @@ postForm.addEventListener("submit", async event => {
     if (selectedCover) {
       cover = await upload("guide-covers", selectedCover, user.id);
       uploaded.push(["guide-covers", cover.path]);
-    } else if (postKind === "image" && file) cover = file;
+    } else if (postKind === "image" && file && !post?.cover_path) cover = file;
     progress.value = 76;
     const posts = supabase.from("posts");
     const request = postId
       ? posts.update({
           ...fields,
-          ...(cover ? { cover_url: cover.url, cover_path: cover.path } : {}),
+          ...(file ? { file_url: file.url, file_path: file.path } : {}),
+          ...(cover ? { cover_url: cover.url, cover_path: selectedCover ? cover.path : null } : {}),
         }).eq("id", postId).select("id").single()
       : posts.insert({
           ...fields,

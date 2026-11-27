@@ -1,4 +1,5 @@
 import { isSupabaseConfigured, supabase } from "../supabase-client.js";
+import { useStaticCatalog } from "./legacy-mode.js";
 
 const $ = selector => document.querySelector(selector);
 const grid = $("#grid");
@@ -9,9 +10,10 @@ let items = [];
 const tidy = name => name.replace(/\.pdf$/i, "").replace(/\s*\(\d+\)$/, "").replace(/_+/g, " ").replace(/\s+-\s+|\s*-\s*(?=[A-Z])/g, " – ").replace(/\s{2,}/g, " ").trim();
 const escapeHtml = value => String(value).replace(/[&<>"']/g, character => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" })[character]);
 const formatDate = value => new Date(value).toLocaleDateString("en-US", { month:"short", day:"numeric", year:"numeric" });
+const displayTitle = item => item.databaseTitle ? item.name : tidy(item.name);
 
 function card(item, index) {
-  const title = tidy(item.name);
+  const title = displayTitle(item);
   const isNew = (Date.now() - new Date(item.createdTime)) / 864e5 < 14;
   return `<a class="card c-${colours[index % colours.length]}" id="g-${escapeHtml(item.id)}" href="${escapeHtml(item.url)}" target="_blank" rel="noopener">
     <div class="cover"><span class="ph d">${escapeHtml(title)}</span>${item.image ? `<img src="${escapeHtml(item.image)}" alt="" loading="${index < 6 ? "eager" : "lazy"}">` : ""}</div>
@@ -21,7 +23,7 @@ function card(item, index) {
 
 function render() {
   const term = (search.value || "").trim().toLowerCase();
-  const visible = term ? items.filter(item => tidy(item.name).toLowerCase().includes(term)) : items;
+  const visible = term ? items.filter(item => displayTitle(item).toLowerCase().includes(term)) : items;
   grid.innerHTML = visible.map(card).join("");
   grid.querySelectorAll(".cover img").forEach(image => {
     const remove = () => image.remove();
@@ -32,6 +34,7 @@ function render() {
 }
 
 async function legacyGuides() {
+  if (!(await useStaticCatalog)) return [];
   const response = await fetch("catalog.json", { cache:"no-store" });
   if (!response.ok) throw new Error("Static catalog unavailable");
   const data = await response.json();
@@ -48,7 +51,7 @@ async function dynamicGuides() {
     .eq("status", "published").eq("kind", "pdf").order("published_at", { ascending:false });
   if (error) throw error;
   return data.filter(post => post.file_url).map(post => ({
-    id:post.legacy_id || post.id, name:post.title,
+    id:post.legacy_id || post.id, name:post.title, databaseTitle:true,
     createdTime:post.published_at || post.created_at, url:post.file_url, image:post.cover_url,
   }));
 }
@@ -61,7 +64,7 @@ function spotlight() {
   const selected = exactId ? items.find(item => item.id === exactId) : items.find(item => words.length && words.every(word => item.name.toLowerCase().includes(word)));
   const box = $("#spot");
   if (!selected) { box.hidden = true; return; }
-  const title = tidy(selected.name);
+  const title = displayTitle(selected);
   box.innerHTML = `<a class="sp-cover" href="${escapeHtml(selected.url)}" target="_blank" rel="noopener"><span class="ph d">${escapeHtml(title)}</span>${selected.image ? `<img src="${escapeHtml(selected.image)}" alt="">` : ""}</a>
     <div class="sp-txt"><div class="k">Your free guide</div><h2 class="d">${escapeHtml(title)}</h2><a class="btn yellow big" href="${escapeHtml(selected.url)}" target="_blank" rel="noopener">Open the PDF</a><p>Opens in your browser. Use the share or download button there to save it.</p></div>`;
   box.querySelector("img")?.addEventListener("error", event => event.currentTarget.remove(), { once:true });

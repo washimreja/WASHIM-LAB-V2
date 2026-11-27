@@ -1,4 +1,5 @@
 import { isSupabaseConfigured, supabase } from "../supabase-client.js";
+import { useStaticCatalog } from "./legacy-mode.js";
 
 const section = document.querySelector(".latest");
 const track = section.querySelector(".latest-track");
@@ -6,6 +7,7 @@ const button = section.querySelector("button");
 const segmenter = new Intl.Segmenter(undefined, { granularity:"grapheme" });
 
 async function staticPosts() {
+  if (!(await useStaticCatalog)) return [];
   const response = await fetch("posts.json", { cache:"no-cache" });
   return response.ok ? response.json() : [];
 }
