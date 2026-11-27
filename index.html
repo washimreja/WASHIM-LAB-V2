@@ -101,12 +101,16 @@ html.js .rv-img.in { clip-path: inset(0 0 0 0 round 0); transform: none; opacity
 .hero .name span { display: inline-block }
 html.js .hero .name span { transform: translateY(70%); opacity: 0; animation: rise 1.4s var(--ease) forwards; animation-delay: calc(2.3s + var(--i) * .07s) }
 @keyframes rise { to { transform: none; opacity: 1 } }
-.hero .portrait { position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); height: min(82%, 860px); aspect-ratio: 596 / 900; z-index: 2 }
-.hero .portrait video, .hero .portrait img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: bottom }
-.hero .portrait img { display: none } .hero.noalpha .portrait img { display: block } .hero.noalpha .portrait video { display: none }
-.hero .portrait canvas { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: bottom; display: none }
-.hero.stacked .portrait canvas { display: block } .hero.stacked .portrait img { display: none }
-.hero .portrait video.src { display: block; position: absolute; left: 0; top: 0; inset: 0 auto auto 0; width: 2px; height: 2px; opacity: 0; pointer-events: none }
+.hero .portrait { position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); height: min(82%, 860px); aspect-ratio: 1086 / 1448; z-index: 2 }
+.hero .portrait img { display: block; width: 100%; height: 100%; object-fit: contain; object-position: bottom; transform-origin: 50% 100% }
+@media (prefers-reduced-motion: no-preference) {
+  .hero .portrait img { animation: portrait-motion 4.6s ease-in-out 1.9s both }
+}
+@keyframes portrait-motion {
+  0% { transform: translateY(14px) scale(.98) }
+  46% { transform: translateY(-5px) scale(1.015) }
+  100% { transform: none }
+}
 .hero .handle { position: absolute; left: 50%; bottom: clamp(150px, 26%, 300px); z-index: 3; transform: translateX(-50%) rotate(-2deg);
   background: var(--butter); color: var(--ink); font-family: var(--disp); font-size: clamp(34px, 5.4vw, 84px); line-height: 1; padding: .12em .4em .2em; border-radius: 10px;
   box-shadow: 0 24px 50px -18px rgba(0,0,0,.6); white-space: nowrap }
@@ -428,8 +432,7 @@ html.ms-open, html.ms-open body { overflow: hidden }
     <div class="chips"><span class="chip">Nexon AI</span><span class="chip">AI Creator</span><span class="chip">AI Engineer</span></div>
     <h1 class="name" aria-label="Washim"><span style="--i:0">W</span><span style="--i:1">A</span><span style="--i:2">S</span><span style="--i:3">H</span><span style="--i:4">I</span><span style="--i:5">M</span></h1>
     <div class="portrait">
-      <video id="heroVid" autoplay muted loop playsinline preload="auto" poster="a/hero.webp" aria-label="Washim Reja"><source src="a/hero.webm" type="video/webm"></video>
-      <img src="a/hero.webp" alt="Washim Reja">
+      <img src="a/washim-home.png" alt="Washim Reja" width="1086" height="1448" fetchpriority="high">
     </div>
     <div class="foot">
       <div class="rv" style="--d:3.2s"><p class="lead">AI isn’t just for <i>engineers.</i></p><p class="sub">If you can use a phone, you can learn AI. I’ll show you how.</p></div>
@@ -632,47 +635,6 @@ html.ms-open, html.ms-open body { overflow: hidden }
       ln.textContent = Math.round(e * 1e6).toLocaleString('en-US'); if (k < 1) requestAnimationFrame(tick); };
     requestAnimationFrame(tick);
   }
-
-  /* hero portrait: transparent video where supported, still image elsewhere (Safari) */
-  const hero = $('.hero'), hv = $('#heroVid');
-  const ua = navigator.userAgent;
-  const apple = /^((?!chrome|android|crios|fxios|edg).)*safari/i.test(ua) || /iP(hone|ad|od)/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
-  const still = () => { hero.classList.add('noalpha'); hv.removeAttribute('autoplay'); hv.pause(); };
-  /* Safari can't play transparent WebM: play an MP4 with the transparency mask stacked
-     underneath (a/hero_s.mp4) and recombine the two halves on a WebGL canvas */
-  const stacked = () => {
-    still();
-    const c = document.createElement('canvas'); c.width = 596; c.height = 900; c.setAttribute('aria-hidden', 'true');
-    const gl = c.getContext('webgl', { alpha: true, premultipliedAlpha: true }); if (!gl) return;
-    const sh = (t, src) => { const o = gl.createShader(t); gl.shaderSource(o, src); gl.compileShader(o); return o; };
-    const pr = gl.createProgram();
-    gl.attachShader(pr, sh(gl.VERTEX_SHADER, 'attribute vec2 p;varying vec2 u;void main(){u=vec2(p.x*.5+.5,.5-p.y*.5);gl_Position=vec4(p,0.,1.);}'));
-    gl.attachShader(pr, sh(gl.FRAGMENT_SHADER, 'precision mediump float;varying vec2 u;uniform sampler2D t;void main(){vec3 c=texture2D(t,vec2(u.x,u.y*.5)).rgb;float a=texture2D(t,vec2(u.x,.5+u.y*.5)).r;gl_FragColor=vec4(c*a,a);}'));
-    gl.linkProgram(pr); if (!gl.getProgramParameter(pr, gl.LINK_STATUS)) return; gl.useProgram(pr);
-    gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer()); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
-    const loc = gl.getAttribLocation(pr, 'p'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
-    gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
-    [gl.TEXTURE_WRAP_S, gl.TEXTURE_WRAP_T].forEach(k => gl.texParameteri(gl.TEXTURE_2D, k, gl.CLAMP_TO_EDGE));
-    [gl.TEXTURE_MIN_FILTER, gl.TEXTURE_MAG_FILTER].forEach(k => gl.texParameteri(gl.TEXTURE_2D, k, gl.LINEAR));
-    const v = document.createElement('video'); v.className = 'src'; v.muted = true; v.loop = true; v.playsInline = true;
-    v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.setAttribute('aria-hidden', 'true'); v.preload = 'auto'; v.src = 'a/hero_s.mp4';
-    $('.hero .portrait').append(v, c);
-    const next = () => v.requestVideoFrameCallback ? v.requestVideoFrameCallback(draw) : requestAnimationFrame(draw);
-    const draw = () => {
-      if (v.readyState >= 2) {
-        gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, v); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-        hero.classList.add('stacked');
-      }
-      next();
-    };
-    const go = () => v.play().then(next, () => {});   /* Low Power Mode blocks autoplay: the still photo stays */
-    go(); addEventListener('touchstart', () => { if (v.paused) go(); }, { once: true, passive: true });
-  };
-  if (reduce) still();
-  else if (apple) { hv.removeAttribute('autoplay'); hv.pause(); stacked(); }
-  else if (!hv.canPlayType('video/webm; codecs="vp9"')) still();
-  else hv.addEventListener('error', still, true);
 
   /* smooth scroll */
   let lenis = null;
