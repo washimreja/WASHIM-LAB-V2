@@ -14,7 +14,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="free.css?v=post-titles">
+<link rel="stylesheet" href="free.css?v=public-feed">
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><linearGradient id="igg" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#FEDA75"/><stop offset=".3" stop-color="#FA7E1E"/><stop offset=".55" stop-color="#D62976"/><stop offset=".8" stop-color="#962FBF"/><stop offset="1" stop-color="#4F5BD5"/></linearGradient></defs></svg>
@@ -27,11 +27,7 @@
     <div class="who"><span class="av"><img src="../a/washim-profile-wide.jpg" alt="Washim Reja" width="96" height="96"></span>
       <div><div class="k">Washim Reja </div><p class="tag">AI creator · AI Engineer · Nexon AI</p></div></div>
     <h1 class="d">Free <i>Everything.</i></h1>
-    <p class="lede">Every guide from my reels, in one place. Tap one to open the PDF.</p>
-    <label class="search" id="searchWrap" hidden>
-      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="m20 20-4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-      <input id="q" type="search" placeholder="Search guides" autocomplete="off" aria-label="Search guides">
-    </label>
+    <p class="lede">Free guides, prompts, images and links from my reels.</p>
   </section>
 
   <section class="spot wrap" id="spot" hidden aria-label="Your guide"></section>
@@ -51,16 +47,30 @@
     <div class="latest-window"><div class="latest-track"></div></div>
   </section>
 
-  <section class="wrap">
-    <div class="k more-k" id="moreK" hidden>More free guides</div>
-    <div class="grid" id="grid" aria-live="polite">
+  <section class="wrap archive" id="all-posts" aria-labelledby="archive-title">
+    <h2 class="d" id="archive-title">All posts</h2>
+    <div class="archive-controls">
+      <label class="search">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="m20 20-4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <input id="q" type="search" placeholder="Search posts" autocomplete="off" aria-label="Search posts">
+      </label>
+      <div class="post-filters" role="group" aria-label="Filter by content type">
+        <button type="button" data-kind="" aria-pressed="true">All</button>
+        <button type="button" data-kind="pdf" aria-pressed="false">PDF</button>
+        <button type="button" data-kind="prompt" aria-pressed="false">Prompt</button>
+        <button type="button" data-kind="image" aria-pressed="false">Image</button>
+        <button type="button" data-kind="link" aria-pressed="false">Link</button>
+      </div>
+    </div>
+    <p class="archive-count" id="post-count" role="status">Loading posts…</p>
+    <div class="grid" id="grid">
       <div class="card sk"></div><div class="card sk"></div><div class="card sk"></div><div class="card sk"></div>
     </div>
-    <p class="empty" id="empty" hidden>No guides match that search.</p>
     <div class="fallback" id="fallback" hidden>
-      <p>Couldn't load the guides right now. Please try again in a minute.</p>
+      <p>Some posts couldn't load. Refresh the page to try again.</p>
     </div>
-    <noscript><div class="fallback"><p>Please turn on JavaScript to see the guides.</p></div></noscript>
+    <button class="btn ghost load-more" id="load-more" type="button" hidden>Load more</button>
+    <noscript><div class="fallback"><p>Please turn on JavaScript to see the posts.</p></div></noscript>
   </section>
 
   <section class="more wrap">
@@ -94,7 +104,7 @@
   <div>© 2026 Washim Reja </div>
 </footer>
 
-<script type="module" src="free.js?v=managed-guides"></script>
-<script type="module" src="latest.js?v=managed-guides"></script>
+<script type="module" src="free.js?v=public-feed"></script>
+<script type="module" src="latest.js?v=public-feed"></script>
 </body>
 </html>

@@ -5,11 +5,18 @@
   <title>Washim Lab</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Manrope:wght@400;500;600;700;800&display=swap">
-  <link rel="stylesheet" href="post.css">
+  <link rel="stylesheet" href="post.css?v=public-feed">
 </head>
 <body>
   <header><a href="../free/"><img src="../a/washim-lab.png" alt="" width="42" height="42"><b>Washim Lab</b></a></header>
-  <main id="content"><p>Loading…</p></main>
-  <script type="module" src="post.js"></script>
+  <main>
+    <a class="back" href="../free/#all-posts">Back to all posts</a>
+    <article id="content"><p>Loading…</p></article>
+    <section id="related" aria-labelledby="related-title" hidden>
+      <h2 id="related-title"></h2>
+      <div class="related-grid"></div>
+    </section>
+  </main>
+  <script type="module" src="post.js?v=public-feed"></script>
 </body>
 </html>
