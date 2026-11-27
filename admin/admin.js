@@ -8,11 +8,40 @@ const contentFile = byId("contentFile");
 const publishButton = byId("publishButton");
 const progress = byId("progress");
 const postForm = byId("postForm");
+const library = byId("library");
+const editor = byId("editor");
+const postList = byId("postList");
+const pageSize = 8;
+let posts = [];
+let page = 1;
 let editingPost = null;
+let editorDirty = false;
+let coverPreviewUrl = null;
 
 function message(element, text, type = "") {
   element.textContent = text;
   element.className = `message ${type}`.trim();
+  element.hidden = !text;
+}
+
+function showView(showEditor, focus = true) {
+  library.hidden = showEditor;
+  editor.hidden = !showEditor;
+  if (!focus) return;
+  byId(showEditor ? "postHeading" : "libraryHeading").focus({ preventScroll: true });
+  window.scrollTo(0, 0);
+}
+
+function previewCover() {
+  if (coverPreviewUrl) URL.revokeObjectURL(coverPreviewUrl);
+  const file = byId("coverFile").files[0]
+    || (kind.value === "image" && !editingPost?.cover_path ? contentFile.files[0] : null);
+  coverPreviewUrl = file ? URL.createObjectURL(file) : null;
+  const source = coverPreviewUrl || editingPost?.cover_url;
+  const preview = byId("currentCover");
+  preview.hidden = !source;
+  if (source) preview.src = source;
+  else preview.removeAttribute("src");
 }
 
 function safeName(name) {
@@ -33,10 +62,10 @@ function updateFields() {
 
 function setPostEditor(post = null) {
   editingPost = post;
+  editorDirty = false;
   postForm.reset();
   byId("postHeading").textContent = post ? "Edit post" : "New post";
   publishButton.textContent = post ? "Save changes" : "Publish post";
-  byId("cancelEdit").hidden = !post;
   byId("publishChoice").hidden = Boolean(post);
   kind.value = post?.kind ?? "pdf";
   kind.disabled = Boolean(post);
@@ -44,10 +73,7 @@ function setPostEditor(post = null) {
   byId("body").value = post?.body ?? "";
   byId("externalUrl").value = post?.external_url ?? "";
   byId("showLatest").checked = post?.show_latest ?? true;
-  const preview = byId("currentCover");
-  preview.hidden = !post?.cover_url;
-  if (post?.cover_url) preview.src = post.cover_url;
-  else preview.removeAttribute("src");
+  previewCover();
   byId("coverHint").hidden = !post;
   byId("coverHint").textContent = post?.cover_url
     ? "Choose a new image to replace the current cover."
@@ -75,6 +101,9 @@ async function isAdmin() {
 async function showSession(session) {
   if (!session) {
     setPostEditor();
+    posts = [];
+    postList.replaceChildren();
+    showView(false, false);
     login.hidden = false;
     dashboard.hidden = true;
     byId("signOut").hidden = true;
@@ -98,23 +127,63 @@ async function showSession(session) {
 }
 
 async function loadPosts() {
-  const list = byId("postList");
-  list.textContent = "Loading…";
-  const { data, error } = await supabase.from("posts")
-    .select("id,title,kind,status,created_at,body,external_url,cover_url,cover_path,show_latest")
-    .order("created_at", { ascending: false });
-  if (error) { list.textContent = error.message; return; }
-  list.replaceChildren();
-  if (!data.length) { list.textContent = "No posts yet."; return; }
-  for (const post of data) {
+  const refresh = byId("refresh");
+  refresh.disabled = true;
+  postList.setAttribute("aria-busy", "true");
+  try {
+    const { data, error } = await supabase.from("posts")
+      .select("id,title,kind,status,created_at,body,external_url,cover_url,cover_path,show_latest")
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    posts = data;
+    renderPosts();
+  } catch (error) {
+    message(byId("listMessage"), error.message, "error");
+  } finally {
+    refresh.disabled = false;
+    postList.removeAttribute("aria-busy");
+  }
+}
+
+function renderPosts() {
+  const query = byId("postSearch").value.trim().toLocaleLowerCase();
+  const type = byId("typeFilter").value;
+  const status = byId("statusFilter").value;
+  const filtered = posts.filter(post => post.title.toLocaleLowerCase().includes(query)
+    && (!type || post.kind === type) && (!status || post.status === status));
+  const pages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  page = Math.min(page, pages);
+  const start = (page - 1) * pageSize;
+  byId("postCount").textContent = filtered.length
+    ? `${start + 1}–${Math.min(start + pageSize, filtered.length)} of ${filtered.length} posts`
+    : (posts.length ? "No posts match these filters." : "No posts yet.");
+  byId("postPages").hidden = pages === 1;
+  byId("pageLabel").textContent = `${page} / ${pages}`;
+  byId("prevPage").disabled = page === 1;
+  byId("nextPage").disabled = page === pages;
+  postList.replaceChildren();
+  for (const post of filtered.slice(start, start + pageSize)) {
     const row = document.createElement("article");
     row.className = "post-row";
+    const summary = document.createElement("div");
+    summary.className = "post-summary";
+    const thumbnail = document.createElement("img");
+    thumbnail.className = "post-thumb";
+    thumbnail.src = post.cover_url || "../a/washim-lab.png";
+    thumbnail.alt = "";
+    thumbnail.loading = "lazy";
+    thumbnail.addEventListener("error", () => { thumbnail.src = "../a/washim-lab.png"; }, { once: true });
     const details = document.createElement("div");
     const title = document.createElement("h3");
     title.textContent = post.title;
     const meta = document.createElement("p");
-    meta.textContent = `${post.kind.toUpperCase()} · ${post.status}`;
+    meta.textContent = post.kind.toUpperCase();
+    const badge = document.createElement("span");
+    badge.className = `post-status ${post.status}`;
+    badge.textContent = post.status === "published" ? "Published" : "Draft";
+    meta.append(" · ", badge);
     details.append(title, meta);
+    summary.append(thumbnail, details);
     const actions = document.createElement("div");
     actions.className = "post-actions";
     const edit = document.createElement("button");
@@ -125,8 +194,7 @@ async function loadPosts() {
     edit.addEventListener("click", () => {
       if (publishButton.disabled) return;
       setPostEditor(post);
-      byId("title").focus({ preventScroll: true });
-      byId("postHeading").scrollIntoView({ block: "start" });
+      showView(true);
     });
     const toggle = document.createElement("button");
     toggle.className = "quiet";
@@ -135,15 +203,32 @@ async function loadPosts() {
     toggle.addEventListener("click", async () => {
       toggle.disabled = true;
       const status = post.status === "published" ? "draft" : "published";
-      const { error: updateError } = await supabase.from("posts").update({
-        status, published_at: status === "published" ? new Date().toISOString() : null,
-      }).eq("id", post.id);
-      if (updateError) alert(updateError.message);
-      await loadPosts();
+      try {
+        const { error } = await supabase.from("posts").update({
+          status, published_at: status === "published" ? new Date().toISOString() : null,
+        }).eq("id", post.id).select("id").single();
+        if (error) throw error;
+        post.status = status;
+        message(byId("listMessage"), status === "published" ? "Post published." : "Post moved to drafts.", "success");
+        renderPosts();
+      } catch (error) {
+        message(byId("listMessage"), error.message, "error");
+        toggle.disabled = false;
+      }
     });
-    actions.append(edit, toggle);
-    row.append(details, actions);
-    list.append(row);
+    actions.append(edit);
+    if (post.status === "published") {
+      const view = document.createElement("a");
+      view.className = "quiet action-link";
+      view.href = `../post/?id=${encodeURIComponent(post.id)}`;
+      view.target = "_blank";
+      view.rel = "noopener";
+      view.textContent = "View";
+      actions.append(view);
+    }
+    actions.append(toggle);
+    row.append(summary, actions);
+    postList.append(row);
   }
 }
 
@@ -174,7 +259,10 @@ postForm.addEventListener("submit", async event => {
   const selectedFile = byId("fileField").hidden ? null : contentFile.files[0];
   const selectedCover = byId("coverFile").files[0];
   publishButton.disabled = true;
-  postForm.inert = true;
+  byId("postFields").disabled = true;
+  byId("cancelEdit").disabled = true;
+  byId("signOut").disabled = true;
+  postForm.setAttribute("aria-busy", "true");
   progress.hidden = false;
   progress.value = 10;
   message(byId("postMessage"), postId ? "Saving changes…" : "Uploading…");
@@ -219,22 +307,54 @@ postForm.addEventListener("submit", async event => {
     progress.value = 100;
     setPostEditor();
     const success = postId ? "Changes saved." : (publishNow ? "Published successfully." : "Draft saved.");
-    message(byId("postMessage"), success, "success");
+    message(byId("listMessage"), success, "success");
+    showView(false);
     await loadPosts();
   } catch (error) {
     for (const [bucket, path] of uploaded) await supabase.storage.from(bucket).remove([path]);
     message(byId("postMessage"), error.message, "error");
   } finally {
     publishButton.disabled = false;
-    postForm.inert = false;
+    byId("postFields").disabled = false;
+    byId("cancelEdit").disabled = false;
+    byId("signOut").disabled = false;
+    postForm.removeAttribute("aria-busy");
     progress.hidden = true;
   }
 });
 
-kind.addEventListener("change", updateFields);
-byId("cancelEdit").addEventListener("click", () => setPostEditor());
+kind.addEventListener("change", () => { updateFields(); previewCover(); });
+byId("coverFile").addEventListener("change", previewCover);
+contentFile.addEventListener("change", previewCover);
+postForm.addEventListener("input", () => { editorDirty = true; });
+byId("publishNow").addEventListener("change", event => {
+  publishButton.textContent = event.target.checked ? "Publish post" : "Save draft";
+});
+byId("newPost").addEventListener("click", () => { setPostEditor(); showView(true); });
+byId("cancelEdit").addEventListener("click", () => {
+  if (editorDirty && !confirm("Discard your unsaved changes?")) return;
+  setPostEditor();
+  showView(false);
+});
+for (const id of ["postSearch", "typeFilter", "statusFilter"]) {
+  byId(id).addEventListener(id === "postSearch" ? "input" : "change", () => {
+    page = 1;
+    renderPosts();
+  });
+}
+for (const [id, direction] of [["prevPage", -1], ["nextPage", 1]]) {
+  byId(id).addEventListener("click", () => {
+    page += direction;
+    renderPosts();
+    byId("postCount").scrollIntoView({ block: "nearest" });
+  });
+}
 byId("refresh").addEventListener("click", loadPosts);
-byId("signOut").addEventListener("click", async () => { await supabase.auth.signOut(); await showSession(null); });
+byId("signOut").addEventListener("click", async () => {
+  if (editorDirty && !confirm("Sign out and discard unsaved changes?")) return;
+  await supabase.auth.signOut();
+  await showSession(null);
+});
 updateFields();
 if (!isSupabaseConfigured) byId("setup").hidden = false;
 else {
