@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Manrope:wght@400;500;600;700;800&display=swap">
-  <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="admin.css?v=edit-post">
 </head>
 <body>
   <header class="top">
@@ -32,7 +32,7 @@
     <div id="dashboard" hidden>
       <section class="hero"><p class="eyebrow">Content studio</p><h1>Publish from your phone.</h1><p>PDF, prompt, image ba useful link upload korun. Published item visitor-ra sathe sathe dekhbe.</p></section>
       <section class="panel">
-        <h2>New post</h2>
+        <h2 id="postHeading">New post</h2>
         <form id="postForm">
           <label>Title<input id="title" maxlength="160" required></label>
           <label>Content type<select id="kind"><option value="pdf">PDF guide</option><option value="prompt">Text prompt</option><option value="image">Image</option><option value="link">External link</option></select></label>
@@ -40,11 +40,14 @@
           <label id="linkField" hidden>External URL<input id="externalUrl" type="url" inputmode="url"></label>
           <label id="fileField">PDF file<input id="contentFile" type="file" accept="application/pdf"></label>
           <label>Cover image <span>optional</span><input id="coverFile" type="file" accept="image/jpeg,image/png,image/webp"></label>
+          <p id="coverHint" class="message" hidden></p>
+          <img id="currentCover" class="current-cover" alt="Current cover" hidden>
           <div class="checks">
             <label><input id="showLatest" type="checkbox" checked> Show in Latest posts</label>
-            <label><input id="publishNow" type="checkbox" checked> Publish now</label>
+            <label id="publishChoice"><input id="publishNow" type="checkbox" checked> Publish now</label>
           </div>
           <button id="publishButton" class="primary" type="submit">Publish post</button>
+          <button id="cancelEdit" class="quiet" type="button" hidden>Cancel edit</button>
           <progress id="progress" max="100" value="0" hidden></progress>
           <p id="postMessage" class="message" role="status"></p>
         </form>
@@ -55,6 +58,6 @@
       </section>
     </div>
   </main>
-  <script type="module" src="admin.js"></script>
+  <script type="module" src="admin.js?v=edit-post"></script>
 </body>
 </html>

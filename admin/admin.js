@@ -7,6 +7,8 @@ const kind = byId("kind");
 const contentFile = byId("contentFile");
 const publishButton = byId("publishButton");
 const progress = byId("progress");
+const postForm = byId("postForm");
+let editingId = null;
 
 function message(element, text, type = "") {
   element.textContent = text;
@@ -18,7 +20,7 @@ function safeName(name) {
 }
 
 function updateFields() {
-  const needsFile = ["pdf", "image"].includes(kind.value);
+  const needsFile = !editingId && ["pdf", "image"].includes(kind.value);
   byId("fileField").hidden = !needsFile;
   contentFile.required = needsFile;
   contentFile.accept = kind.value === "pdf" ? "application/pdf" : "image/jpeg,image/png,image/webp";
@@ -26,6 +28,31 @@ function updateFields() {
   byId("linkField").hidden = kind.value !== "link";
   byId("externalUrl").required = kind.value === "link";
   byId("bodyField").childNodes[0].textContent = kind.value === "prompt" ? "Prompt text" : "Description or prompt";
+}
+
+function setPostEditor(post = null) {
+  editingId = post?.id ?? null;
+  postForm.reset();
+  byId("postHeading").textContent = post ? "Edit post" : "New post";
+  publishButton.textContent = post ? "Save changes" : "Publish post";
+  byId("cancelEdit").hidden = !post;
+  byId("publishChoice").hidden = Boolean(post);
+  kind.value = post?.kind ?? "pdf";
+  kind.disabled = Boolean(post);
+  byId("title").value = post?.title ?? "";
+  byId("body").value = post?.body ?? "";
+  byId("externalUrl").value = post?.external_url ?? "";
+  byId("showLatest").checked = post?.show_latest ?? true;
+  const preview = byId("currentCover");
+  preview.hidden = !post?.cover_url;
+  if (post?.cover_url) preview.src = post.cover_url;
+  else preview.removeAttribute("src");
+  byId("coverHint").hidden = !post;
+  byId("coverHint").textContent = post?.cover_url
+    ? "Choose a new image to replace the current cover."
+    : "Choose an image to add a cover.";
+  message(byId("postMessage"), "");
+  updateFields();
 }
 
 async function upload(bucket, file, userId) {
@@ -46,6 +73,7 @@ async function isAdmin() {
 
 async function showSession(session) {
   if (!session) {
+    setPostEditor();
     login.hidden = false;
     dashboard.hidden = true;
     byId("signOut").hidden = true;
@@ -72,7 +100,8 @@ async function loadPosts() {
   const list = byId("postList");
   list.textContent = "Loading…";
   const { data, error } = await supabase.from("posts")
-    .select("id,title,kind,status,created_at").order("created_at", { ascending: false });
+    .select("id,title,kind,status,created_at,body,external_url,cover_url,show_latest")
+    .order("created_at", { ascending: false });
   if (error) { list.textContent = error.message; return; }
   list.replaceChildren();
   if (!data.length) { list.textContent = "No posts yet."; return; }
@@ -85,6 +114,19 @@ async function loadPosts() {
     const meta = document.createElement("p");
     meta.textContent = `${post.kind.toUpperCase()} · ${post.status}`;
     details.append(title, meta);
+    const actions = document.createElement("div");
+    actions.className = "post-actions";
+    const edit = document.createElement("button");
+    edit.className = "quiet";
+    edit.type = "button";
+    edit.textContent = "Edit";
+    edit.setAttribute("aria-label", `Edit ${post.title}`);
+    edit.addEventListener("click", () => {
+      if (publishButton.disabled) return;
+      setPostEditor(post);
+      byId("title").focus({ preventScroll: true });
+      byId("postHeading").scrollIntoView({ block: "start" });
+    });
     const toggle = document.createElement("button");
     toggle.className = "quiet";
     toggle.type = "button";
@@ -98,7 +140,8 @@ async function loadPosts() {
       if (updateError) alert(updateError.message);
       await loadPosts();
     });
-    row.append(details, toggle);
+    actions.append(edit, toggle);
+    row.append(details, actions);
     list.append(row);
   }
 }
@@ -114,20 +157,32 @@ byId("loginForm").addEventListener("submit", async event => {
   await showSession(data.session);
 });
 
-byId("postForm").addEventListener("submit", async event => {
+postForm.addEventListener("submit", async event => {
   event.preventDefault();
+  if (publishButton.disabled) return;
+  const postId = editingId;
+  const fields = {
+    title: byId("title").value.trim(),
+    body: byId("body").value.trim(),
+    ...(kind.value === "link" ? { external_url: byId("externalUrl").value.trim() } : {}),
+    show_latest: byId("showLatest").checked,
+  };
+  const postKind = kind.value;
+  const publishNow = byId("publishNow").checked;
+  const selectedFile = postId ? null : contentFile.files[0];
+  const selectedCover = byId("coverFile").files[0];
   publishButton.disabled = true;
+  postForm.inert = true;
   progress.hidden = false;
   progress.value = 10;
-  message(byId("postMessage"), "Uploading…");
+  message(byId("postMessage"), postId ? "Saving changes…" : "Uploading…");
   const uploaded = [];
   try {
+    if (!fields.title) throw new Error("Enter a title.");
     const { data: { user } } = await supabase.auth.getUser();
     if (!user || !(await isAdmin())) throw new Error("Admin session expired. Log in again.");
     let file = null;
     let cover = null;
-    const selectedFile = contentFile.files[0];
-    const selectedCover = byId("coverFile").files[0];
     if (selectedFile) {
       file = await upload("guide-files", selectedFile, user.id);
       uploaded.push(["guide-files", file.path]);
@@ -136,39 +191,45 @@ byId("postForm").addEventListener("submit", async event => {
     if (selectedCover) {
       cover = await upload("guide-covers", selectedCover, user.id);
       uploaded.push(["guide-covers", cover.path]);
-    } else if (kind.value === "image" && file) cover = file;
+    } else if (postKind === "image" && file) cover = file;
     progress.value = 76;
-    const publishNow = byId("publishNow").checked;
-    const { error } = await supabase.from("posts").insert({
-      title: byId("title").value.trim(), kind: kind.value,
-      body: byId("body").value.trim(), file_url: file?.url || null,
-      file_path: file?.path || null, cover_url: cover?.url || null,
-      cover_path: selectedCover ? cover?.path : null,
-      external_url: byId("externalUrl").value.trim() || null,
-      status: publishNow ? "published" : "draft",
-      show_latest: byId("showLatest").checked,
-      published_at: publishNow ? new Date().toISOString() : null,
-      created_by: user.id,
-    });
+    const posts = supabase.from("posts");
+    const request = postId
+      ? posts.update({
+          ...fields,
+          ...(cover ? { cover_url: cover.url, cover_path: cover.path } : {}),
+        }).eq("id", postId).select("id").single()
+      : posts.insert({
+          ...fields,
+          kind: postKind,
+          file_url: file?.url ?? null,
+          file_path: file?.path ?? null,
+          cover_url: cover?.url ?? null,
+          cover_path: selectedCover ? cover.path : null,
+          status: publishNow ? "published" : "draft",
+          published_at: publishNow ? new Date().toISOString() : null,
+          created_by: user.id,
+        });
+    const { error } = await request;
     if (error) throw error;
+    uploaded.length = 0;
     progress.value = 100;
-    byId("postForm").reset();
-    byId("showLatest").checked = true;
-    byId("publishNow").checked = true;
-    kind.value = "pdf";
-    updateFields();
-    message(byId("postMessage"), publishNow ? "Published successfully." : "Draft saved.", "success");
+    setPostEditor();
+    const success = postId ? "Changes saved." : (publishNow ? "Published successfully." : "Draft saved.");
+    message(byId("postMessage"), success, "success");
     await loadPosts();
   } catch (error) {
     for (const [bucket, path] of uploaded) await supabase.storage.from(bucket).remove([path]);
     message(byId("postMessage"), error.message, "error");
   } finally {
     publishButton.disabled = false;
-    setTimeout(() => { progress.hidden = true; }, 700);
+    postForm.inert = false;
+    progress.hidden = true;
   }
 });
 
 kind.addEventListener("change", updateFields);
+byId("cancelEdit").addEventListener("click", () => setPostEditor());
 byId("refresh").addEventListener("click", loadPosts);
 byId("signOut").addEventListener("click", async () => { await supabase.auth.signOut(); await showSession(null); });
 updateFields();

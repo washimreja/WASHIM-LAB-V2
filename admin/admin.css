@@ -1,5 +1,6 @@
 :root { color-scheme:dark; --bg:#100e12; --panel:#1b181e; --line:#39333d; --text:#f7f0e4; --muted:#aaa1a8; --accent:#f5e7a7; --ink:#171318 }
 * { box-sizing:border-box }
+[hidden] { display:none !important }
 body { margin:0; background:var(--bg); color:var(--text); font-family:Manrope,Arial,sans-serif; min-height:100vh }
 .top { min-height:72px; padding:14px max(18px,env(safe-area-inset-left)); display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--line) }
 .top a { display:flex; align-items:center; gap:10px; color:inherit; text-decoration:none }
@@ -33,5 +34,8 @@ progress { width:100%; accent-color:var(--accent) }
 .post-row { display:grid; grid-template-columns:1fr auto; gap:12px; padding:14px; border-radius:14px; background:#110f13 }
 .post-row h3 { margin:0 0 5px; font-size:16px }.post-row p { color:var(--muted); margin:0; font-size:13px }
 .post-row button { min-height:38px; padding:7px 12px; align-self:center }
+.post-row h3 { overflow-wrap:anywhere }
+.post-actions { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:6px }
+.current-cover { width:120px; height:72px; object-fit:cover; border-radius:8px }
 code { overflow-wrap:anywhere }
 @media (min-width:640px) { .panel { padding:30px } }
