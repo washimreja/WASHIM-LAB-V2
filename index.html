@@ -289,7 +289,8 @@ html.js .tale.flat .tale-bars { display: none } html.js .tale.flat .tale-stage {
 .cols a { display: block; border-radius: 12px; overflow: hidden; transition: transform .6s var(--ease), box-shadow .6s }
 .cols a:hover { transform: translateY(-6px) scale(1.03); box-shadow: 0 20px 40px -16px rgba(0,0,0,.8) }
 .thumbs { margin-top: clamp(50px, 6vw, 90px); white-space: nowrap; overflow: hidden; padding-bottom: clamp(70px, 9vw, 130px) }
-.thumbs .track { display: inline-flex; gap: 16px; animation: marq 50s linear infinite; padding-left: var(--gut) }
+.thumbs .track { display: inline-flex; animation: marq 75s linear infinite; margin-left: var(--gut) }
+.thumbs .thumb-group { display: flex; flex: none; gap: 16px; padding-right: 16px }
 .thumbs a { width: clamp(240px, 24vw, 380px); border-radius: 12px; overflow: hidden; flex: none; transition: transform .6s var(--ease) }
 .thumbs a:hover { transform: translateY(-6px) }
 .thumbs:hover .track, .band:hover .track { animation-play-state: paused }
@@ -431,6 +432,8 @@ html.ms-open, html.ms-open body { overflow: hidden }
   html.js .step { transition: none !important; filter: none !important; transform: none !important }
   html.js .rv, html.js .rv-img, html.js .hero .name span, html.js .hero .handle { opacity: 1 !important; transform: none !important; clip-path: none !important; animation: none !important }
   .band .track, .thumbs .track, .pills .track { animation: none }
+  .thumbs { overflow-x: auto }
+  .thumbs .thumb-group[aria-hidden="true"] { display: none }
   .hero .handle { transform: translateX(-50%) rotate(-2deg) !important }
 }
 </style>
@@ -536,7 +539,32 @@ html.ms-open, html.ms-open body { overflow: hidden }
         <div class="col"><div class="loop rev"><a href="https://www.instagram.com/cinematic_vibes_by_washim/" target="_blank" rel="noopener" tabindex="-1"><img src="a/ig6.webp" alt="" loading="lazy"></a><a href="https://www.instagram.com/cinematic_vibes_by_washim/" target="_blank" rel="noopener" tabindex="-1"><img src="a/ig0.webp" alt="" loading="lazy"></a><a href="https://www.instagram.com/cinematic_vibes_by_washim/" target="_blank" rel="noopener" tabindex="-1"><img src="a/ig7.webp" alt="" loading="lazy"></a><a href="https://www.instagram.com/cinematic_vibes_by_washim/" target="_blank" rel="noopener" tabindex="-1"><img src="a/ig2.webp" alt="" loading="lazy"></a><a href="https://www.instagram.com/cinematic_vibes_by_washim/" target="_blank" rel="noopener" tabindex="-1"><img src="a/ig8.webp" alt="" loading="lazy"></a><a href="https://www.instagram.com/cinematic_vibes_by_washim/" target="_blank" rel="noopener" tabindex="-1"><img src="a/ig6.webp" alt="" loading="lazy"></a><a href="https://www.instagram.com/cinematic_vibes_by_washim/" target="_blank" rel="noopener" tabindex="-1"><img src="a/ig0.webp" alt="" loading="lazy"></a><a href="https://www.instagram.com/cinematic_vibes_by_washim/" target="_blank" rel="noopener" tabindex="-1"><img src="a/ig7.webp" alt="" loading="lazy"></a><a href="https://www.instagram.com/cinematic_vibes_by_washim/" target="_blank" rel="noopener" tabindex="-1"><img src="a/ig2.webp" alt="" loading="lazy"></a><a href="https://www.instagram.com/cinematic_vibes_by_washim/" target="_blank" rel="noopener" tabindex="-1"><img src="a/ig8.webp" alt="" loading="lazy"></a></div></div>
       </div>
     </div>
-    <div class="thumbs" aria-label="YouTube videos"><div class="track"><a href="https://youtube.com/@washim9" target="_blank" rel="noopener" tabindex="-1"><img src="a/yt0.webp" alt="" loading="lazy"></a><a href="https://youtube.com/@washim9" target="_blank" rel="noopener" tabindex="-1"><img src="a/yt1.webp" alt="" loading="lazy"></a><a href="https://youtube.com/@washim9" target="_blank" rel="noopener" tabindex="-1"><img src="a/yt2.webp" alt="" loading="lazy"></a><a href="https://youtube.com/@washim9" target="_blank" rel="noopener" tabindex="-1"><img src="a/yt3.webp" alt="" loading="lazy"></a><a href="https://youtube.com/@washim9" target="_blank" rel="noopener" tabindex="-1"><img src="a/yt4.webp" alt="" loading="lazy"></a><a href="https://youtube.com/@washim9" target="_blank" rel="noopener" tabindex="-1"><img src="a/yt5.webp" alt="" loading="lazy"></a><a href="https://youtube.com/@washim9" target="_blank" rel="noopener" tabindex="-1"><img src="a/yt0.webp" alt="" loading="lazy"></a><a href="https://youtube.com/@washim9" target="_blank" rel="noopener" tabindex="-1"><img src="a/yt1.webp" alt="" loading="lazy"></a><a href="https://youtube.com/@washim9" target="_blank" rel="noopener" tabindex="-1"><img src="a/yt2.webp" alt="" loading="lazy"></a><a href="https://youtube.com/@washim9" target="_blank" rel="noopener" tabindex="-1"><img src="a/yt3.webp" alt="" loading="lazy"></a><a href="https://youtube.com/@washim9" target="_blank" rel="noopener" tabindex="-1"><img src="a/yt4.webp" alt="" loading="lazy"></a><a href="https://youtube.com/@washim9" target="_blank" rel="noopener" tabindex="-1"><img src="a/yt5.webp" alt="" loading="lazy"></a></div></div>
+    <div class="thumbs" aria-label="YouTube thumbnails">
+      <div class="track">
+        <div class="thumb-group">
+          <a href="https://youtube.com/@washim9" target="_blank" rel="noopener" tabindex="-1"><img src="a/yt0.webp" alt="Freelancing" loading="lazy"></a>
+          <a href="https://youtube.com/@washim9" target="_blank" rel="noopener" tabindex="-1"><img src="a/yt1.webp" alt="How to edit reels" loading="lazy"></a>
+          <a href="https://youtube.com/@washim9" target="_blank" rel="noopener" tabindex="-1"><img src="a/yt2.webp" alt="Storytelling and marketing" loading="lazy"></a>
+          <a href="https://youtube.com/@washim9" target="_blank" rel="noopener" tabindex="-1"><img src="a/yt3.webp" alt="Is graphics design dead? Blue plaid shirt cover" loading="lazy"></a>
+          <a href="https://youtube.com/@washim9" target="_blank" rel="noopener" tabindex="-1"><img src="a/yt4.webp" alt="Is graphics design dead? Black jacket cover" loading="lazy"></a>
+          <a href="https://youtube.com/@washim9" target="_blank" rel="noopener" tabindex="-1"><img src="a/yt5.webp" alt="AI tools for product videos" loading="lazy"></a>
+          <a href="https://youtube.com/@washim9" target="_blank" rel="noopener" tabindex="-1"><img src="a/yt6.webp" alt="Five free AI tools" loading="lazy"></a>
+          <a href="https://youtube.com/@washim9" target="_blank" rel="noopener" tabindex="-1"><img src="a/yt7.webp" alt="Video editing from zero to hero" loading="lazy"></a>
+          <a href="https://youtube.com/@washim9" target="_blank" rel="noopener" tabindex="-1"><img src="a/yt8.webp" alt="After Effects project breakdown in Bangla" loading="lazy"></a>
+        </div>
+        <div class="thumb-group" aria-hidden="true">
+          <a href="https://youtube.com/@washim9" target="_blank" rel="noopener" tabindex="-1"><img src="a/yt0.webp" alt="" loading="lazy"></a>
+          <a href="https://youtube.com/@washim9" target="_blank" rel="noopener" tabindex="-1"><img src="a/yt1.webp" alt="" loading="lazy"></a>
+          <a href="https://youtube.com/@washim9" target="_blank" rel="noopener" tabindex="-1"><img src="a/yt2.webp" alt="" loading="lazy"></a>
+          <a href="https://youtube.com/@washim9" target="_blank" rel="noopener" tabindex="-1"><img src="a/yt3.webp" alt="" loading="lazy"></a>
+          <a href="https://youtube.com/@washim9" target="_blank" rel="noopener" tabindex="-1"><img src="a/yt4.webp" alt="" loading="lazy"></a>
+          <a href="https://youtube.com/@washim9" target="_blank" rel="noopener" tabindex="-1"><img src="a/yt5.webp" alt="" loading="lazy"></a>
+          <a href="https://youtube.com/@washim9" target="_blank" rel="noopener" tabindex="-1"><img src="a/yt6.webp" alt="" loading="lazy"></a>
+          <a href="https://youtube.com/@washim9" target="_blank" rel="noopener" tabindex="-1"><img src="a/yt7.webp" alt="" loading="lazy"></a>
+          <a href="https://youtube.com/@washim9" target="_blank" rel="noopener" tabindex="-1"><img src="a/yt8.webp" alt="" loading="lazy"></a>
+        </div>
+      </div>
+    </div>
   </section>
 
   <!-- PARTNERS -->
