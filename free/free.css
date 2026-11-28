@@ -99,7 +99,14 @@ footer a { text-decoration: none }
 .me img { width: 40px; height: 40px; border-radius: 9px; object-fit: contain }
 .me span { display: grid; line-height: 1.15 } .me b { font-family: var(--disp); font-weight: 400; font-size: 20px } .me small { color: var(--muted); font-size: 12.5px; font-weight: 600 }
 .who { display: flex; align-items: center; gap: 16px; margin-bottom: 18px }
-.who .av { width: 96px; height: 96px; border-radius: 50%; overflow: hidden; border: 3px solid var(--butter); flex: none }
+.who .portrait {
+  display: block;
+  width: clamp(112px, 35vw, 176px);
+  height: auto;
+  flex: none;
+  -webkit-mask-image: linear-gradient(to bottom, #000 68%, transparent);
+  mask-image: linear-gradient(to bottom, #000 68%, transparent);
+}
 .who .tag { margin: 6px 0 0; font-weight: 600; font-size: 15px }
 .intro .who + h1 { margin-top: 0 }
 
@@ -136,18 +143,9 @@ footer { display: grid; gap: 12px }
   .sc-name { grid-area: name; font-size: 26px } .sc-h { grid-area: h } .sc p { grid-area: p; margin: 10px 0 0 } .sc-btn { grid-area: btn; margin: 0; align-self: center; padding: 10px 18px }
 }
 @media (max-width: 560px) {
-  .who .av { width: 304px; height: 304px } .who .tag { font-size: 13.5px }
+  .who .tag { font-size: 13.5px }
   .strip { gap: 8px } .chip { flex-direction: column; align-items: flex-start; gap: 8px; padding: 12px } .chip b { font-size: 14px } .chip small { font-size: 11.5px }
   .me small { display: none }
-}
-
-/* Profile photo zoom: 1 = full photo, 1.5 = closer. */
-.who .av img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transform: scale(2);
 }
 
 .latest { padding-bottom: clamp(32px, 5vw, 64px) }
