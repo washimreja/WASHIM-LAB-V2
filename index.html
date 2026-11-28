@@ -94,9 +94,27 @@ html.js .rv-img.in { clip-path: inset(0 0 0 0 round 0); transform: none; opacity
 @media (max-width: 760px) {
   .nav .links { display: none }
   .nav .mobile-guides {
-    display: inline-flex; align-items: center; min-height: 44px;
-    background: var(--ink); color: var(--ivory); border: 1px solid rgba(243,238,228,.4);
+    display: inline-flex; min-height: 44px; box-sizing: border-box;
+    position: relative; overflow: hidden; white-space: nowrap;
+    background: linear-gradient(145deg, #45331e, #231a16 72%);
+    color: #fff1bd; border: 1px solid #b99050;
+    box-shadow: 0 0 16px rgba(214,166,88,.22), inset 0 1px rgba(255,237,179,.2);
   }
+  .nav .mobile-guides-icon { color: #ffda83; font-size: 1.2em; line-height: 1 }
+  .nav .mobile-guides:focus-visible { outline: 2px solid #fff1bd; outline-offset: 3px }
+  .nav .mobile-guides:active { transform: scale(.97) }
+}
+@media (max-width: 760px) and (prefers-reduced-motion: no-preference) {
+  .nav .mobile-guides::after {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(110deg, transparent 36%, rgba(255,232,173,.23) 50%, transparent 64%);
+    transform: translateX(-110%);
+    animation: guides-shine 2s ease-out 1.2s 2;
+  }
+}
+@keyframes guides-shine {
+  0% { transform: translateX(-110%) }
+  62%, 100% { transform: translateX(110%) }
 }
 
 /* ---------- hero ---------- */
@@ -430,7 +448,7 @@ html.ms-open, html.ms-open body { overflow: hidden }
 
 <nav class="nav" aria-label="Main">
   <div class="links"><a href="#story">Story</a><a href="#work">Work</a><a href="/free/">Free guides</a><a href="/gallery/">Gallery</a><a href="#help">Collaborate</a><a href="https://skymedialabs.com/" target="_blank" rel="noopener">Sky Media Labs</a></div>
-  <a class="btn mobile-guides" href="/free/">Free guides</a>
+  <a class="btn mobile-guides" href="/free/"><span class="mobile-guides-icon" aria-hidden="true">✦</span>Free guides</a>
   <a class="btn" href="#help" data-mail="Speaking invitation">Work with me</a>
 </nav>
 
