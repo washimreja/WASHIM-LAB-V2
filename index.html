@@ -90,7 +90,14 @@ html.js .rv-img.in { clip-path: inset(0 0 0 0 round 0); transform: none; opacity
   -webkit-backdrop-filter: blur(14px) saturate(140%); backdrop-filter: blur(14px) saturate(140%); border: 1px solid rgba(243,238,228,.12) }
 .nav .links a { text-decoration: none; opacity: .75; transition: opacity .3s } .nav .links a:hover { opacity: 1 }
 .nav .btn { padding: 11px 20px; font-size: 14px; background: var(--butter); color: var(--ink) }
-@media (max-width: 760px) { .nav .links { display: none } }
+.nav .mobile-guides { display: none }
+@media (max-width: 760px) {
+  .nav .links { display: none }
+  .nav .mobile-guides {
+    display: inline-flex; align-items: center; min-height: 44px;
+    background: var(--ink); color: var(--ivory); border: 1px solid rgba(243,238,228,.4);
+  }
+}
 
 /* ---------- hero ---------- */
 .hero { position: relative; min-height: clamp(620px, 100svh, 1080px); overflow: hidden; display: grid }
@@ -423,6 +430,7 @@ html.ms-open, html.ms-open body { overflow: hidden }
 
 <nav class="nav" aria-label="Main">
   <div class="links"><a href="#story">Story</a><a href="#work">Work</a><a href="/free/">Free guides</a><a href="/gallery/">Gallery</a><a href="#help">Collaborate</a><a href="https://skymedialabs.com/" target="_blank" rel="noopener">Sky Media Labs</a></div>
+  <a class="btn mobile-guides" href="/free/">Free guides</a>
   <a class="btn" href="#help" data-mail="Speaking invitation">Work with me</a>
 </nav>
 
